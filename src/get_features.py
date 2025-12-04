@@ -2,6 +2,9 @@ import numpy as np
 import cv2
 from skimage.feature import local_binary_pattern, graycomatrix, graycoprops
 
+"""
+RGB, HSV, GRAY, SOBEL, CANNY, BINARY, LBP, GLCM
+"""
 
 def get_rgb(path):
     img = cv2.imread(path)
@@ -61,3 +64,76 @@ def get_glcm_prop(gray_):
     features['entropy']       = graycoprops(glcm, 'entropy').mean()
 
     return features
+
+"""
+Processing all features
+"""
+
+
+
+def update_features(path_):
+
+    all_features = {}
+
+    all_features.update(get_rgb_hsv_features(path_))
+    all_features.update(get_texture_features(path_))
+    all_features.update(get_glcm_features(path_))
+
+    return all_features
+
+def get_rgb_hsv_features(path_):
+    features = {}
+
+    rgb_img = get_rgb(path_)
+    hsv_img = get_hsv(path_)
+
+    for i , channel in enumerate(['r', 'g', 'b']):
+        features[f'{channel}_mean']     = rgb_img[:, :, i].mean()
+        features[f'{channel}_median']   = np.median(rgb_img[:, :, i])
+        features[f'{channel}_std']      = rgb_img[:, :, i].std() 
+    
+    features['green_coverage'] = get_green_coverage(rgb_img); del rgb_img
+
+    for i , channel in enumerate(['hue', 'sat', 'val']):
+        features[f'{channel}_mean']     = hsv_img[:, :, i].mean()
+        features[f'{channel}_std']      = hsv_img[:, :, i].std()
+    
+    del hsv_img    
+    return features     
+
+def get_texture_features(path_):
+    features = {}
+
+    gray_img    = get_gray(path_)
+    sobel_img   = get_sobel(gray_img)
+    canny_img   = get_canny(gray_img)
+    binary_img  = get_binary(gray_img)
+    lbp_img     = get_lbp(resized_img(gray_img))
+
+    features['sobel_mean']  = sobel_img.mean()
+    features['sobel_std']   = sobel_img.std(); del sobel_img
+
+    features['canny_mean']  = canny_img.mean()
+    features['canny_std']   = canny_img.std(); del canny_img
+
+    features['binary_mean'] = binary_img.mean()
+    features['binary_std']  = binary_img.std(); del binary_img
+ 
+    features['lbp_mean']    = lbp_img.mean()
+    features['lbp_std']     = lbp_img.std() 
+
+    nbins       = int(np.unique(lbp_img.ravel()).max()) +1 
+    lbp_hist, _ = np.histogram(lbp_img.ravel(), bins=nbins, range=(0, nbins), density=True) ; del lbp_img
+    lbp_list    = lbp_hist/lbp_hist.sum() 
+    for i, vals in enumerate(lbp_list):
+        features[f'lbp_{i}'] = vals
+
+    return features
+
+def get_glcm_features(path_):
+    gray_img = get_gray(path_) 
+    features = get_glcm_prop(resized_img(gray_img))
+
+    return features
+
+
