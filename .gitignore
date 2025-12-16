@@ -1,5 +1,6 @@
 # data
-models/
+*.keras
+*.pth
 data/
 .DS_Store
 

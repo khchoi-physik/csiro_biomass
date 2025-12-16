@@ -3,8 +3,9 @@ Source code for the project
 
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # from .get_features import *
-from .preproces_data import *
-from .train_functions import *
+from .preprocess_data import *
+from .train_functions import * 
+from .models import *
