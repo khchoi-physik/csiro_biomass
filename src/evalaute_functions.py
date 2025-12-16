@@ -7,36 +7,31 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_squared_error
 
-def evaluate_model(model, train_loader, valid_loader, train_epoch, validate_epoch, optimizer, criterion, scheduler, device, models_dir, NUM_EPOCHS, PATIENCE, model_name):
+@torch.no_grad()
+def evaluate_testds(model, loader, device):
+    model.eval()
+    y_pred_list, y_targ_list = [], []
 
-    history = { 'train_loss': [], 'valid_loss': [], 'val_rmse': [], 'lr': []}
+    pbar = tqdm(loader, desc='Testing')
+    for img, tar in pbar:
+        img = img.to(device, non_blocking=True)
+        tar = tar.to(device, non_blocking=True)
 
-    best_val = float('inf')
-    best_model = None
-
-    epoch_counter = 0
-    for epoch in range(NUM_EPOCHS): 
-        print(f"\nEpoch {epoch+1} / {NUM_EPOCHS}"); print(32 * '- ')
+        y_pred = model(img)
         
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-        valid_loss, rmse, pred_list, targ_list = validate_epoch(model, valid_loader, criterion, device)
-        
-        scheduler.step(valid_loss)
-        current_lr = optimizer.param_groups[0]['lr']
-        
-        history['train_loss'].append(train_loss)
-        history['valid_loss'].append(valid_loss)
-        history['val_rmse'].append(rmse)
-        history['lr'].append(current_lr)
-        print(f"Train_loss : {train_loss:.4f}, Valid_loss : {valid_loss:.4f}, RMSE : {rmse:.4f}, LR : {current_lr:.6f}")
+        y_pred_list.append(y_pred.cpu()) 
+        y_targ_list.append(tar.cpu())
 
-        if valid_loss < best_val: 
-            epoch_counter = 0
-            print(f"Improvement from {best_val:.4f} to {valid_loss:.4f}")
-            best_val, best_model = valid_loss, model.state_dict()
-            torch.save(best_model, os.path.join(models_dir, f"best_model_{model_name}.pth")) 
-        else: epoch_counter += 1; print(f"No improvement from {best_val:.4f}")
-        if epoch_counter >= PATIENCE: print("Early stopping"); break
-        
+    y_pred_list = torch.cat(y_pred_list, dim=0).numpy()
+    y_targ_list = torch.cat(y_targ_list, dim=0).numpy()
+    return y_pred_list, y_targ_list
 
-    return history
+
+# def tta_evaluate(model, test_data, data_dir, transform, batch_size, device, model):
+
+#     dataset = BiomassDS(test_data, data_dir, transform)
+#     loader  = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+#     y_pred_list, y_targ_list = evaluate_testds(model, loader, device)
+
+#     return y_pred_list, y_targ_list
