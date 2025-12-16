@@ -9,3 +9,4 @@ __version__ = "0.0.2"
 from .preprocess_data import *
 from .train_functions import * 
 from .models import *
+from .transforms_functions import *
