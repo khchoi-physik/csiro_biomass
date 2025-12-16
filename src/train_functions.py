@@ -12,8 +12,9 @@ def train_epoch(model, loader, optimizer, criterion, device):
 
     total_loss, num_batches = 0, 0
 
-    pbar = tqdm(loader, desc='Training')
-    for img, tar in pbar: 
+    # pbar = tqdm(loader, desc='Training')
+    # for img, tar in pbar: 
+    for img, tar in loader:
         img = img.to(device, non_blocking=True)
         tar = tar.to(device, non_blocking=True)
 
@@ -26,11 +27,12 @@ def train_epoch(model, loader, optimizer, criterion, device):
         optimizer.step()
 
         total_loss += loss.item(); num_batches += 1
-        pbar.set_postfix(loss=loss.item())
+        #pbar.set_postfix(loss=loss.item())
 
     avg_loss = total_loss / num_batches; 
     return avg_loss
 
+@torch.no_grad()
 def validate_epoch(model, loader, criterion, device):
     model.eval()
 
@@ -38,21 +40,21 @@ def validate_epoch(model, loader, criterion, device):
 
     all_preds, all_targs = [], []
 
-    pbar = tqdm(loader, desc='Validation')
-    with torch.no_grad():
-        for img, tar in pbar: 
-            img = img.to(device, non_blocking=True)
-            tar = tar.to(device, non_blocking=True)
+    # pbar = tqdm(loader, desc='Validation')
+    # with torch.no_grad():
+    for img, tar in loader: 
+        img = img.to(device, non_blocking=True)
+        tar = tar.to(device, non_blocking=True)
 
-            pred = model(img)
-            loss = criterion(pred, tar); 
-            
-            total_loss += loss.item(); num_batches += 1
+        pred = model(img)
+        loss = criterion(pred, tar); 
+        
+        total_loss += loss.item(); num_batches += 1
 
-            all_preds.append(pred.cpu()) 
-            all_targs.append(tar.cpu())
-            
-            pbar.set_postfix(loss=loss.item())
+        all_preds.append(pred.cpu()) 
+        all_targs.append(tar.cpu())
+        
+        # pbar.set_postfix(loss=loss.item())
 
     all_preds   = torch.cat(all_preds).numpy() 
     all_targs   = torch.cat(all_targs).numpy()
@@ -68,8 +70,9 @@ def train_epoch_twostream(model, loader, optimizer, criterion, device):
 
     total_loss, num_batches = 0, 0
 
-    pbar = tqdm(loader, desc='Training')
-    for left, right, target in pbar:
+    # pbar = tqdm(loader, desc='Training')
+    # for left, right, target in pbar:
+    for left, right, target in loader:
         left, right, target = left.to(device), right.to(device), target.to(device)
 
         optimizer.zero_grad()
@@ -81,11 +84,12 @@ def train_epoch_twostream(model, loader, optimizer, criterion, device):
         optimizer.step()
 
         total_loss += loss.item(); num_batches += 1
-        pbar.set_postfix(loss=loss.item())
+        # pbar.set_postfix(loss=loss.item())
 
     avg_loss = total_loss / num_batches; 
     return avg_loss
 
+@torch.no_grad()
 def validate_epoch_twostream(model, loader, criterion, device):
     model.eval()
 
@@ -93,20 +97,20 @@ def validate_epoch_twostream(model, loader, criterion, device):
 
     all_preds, all_targs = [], []
 
-    pbar = tqdm(loader, desc='Validation')
-    with torch.no_grad():
-        for left, right, target in pbar:
-            left, right, target = left.to(device), right.to(device), target.to(device)
+    # pbar = tqdm(loader, desc='Validation')
+    # with torch.no_grad():
+    for left, right, target in loader:
+        left, right, target = left.to(device), right.to(device), target.to(device)
 
-            pred = model(left, right)
-            loss = criterion(pred, target); 
-            
-            total_loss += loss.item(); num_batches += 1
+        pred = model(left, right)
+        loss = criterion(pred, target); 
+        
+        total_loss += loss.item(); num_batches += 1
 
-            all_preds.append(pred.cpu()) 
-            all_targs.append(target.cpu())
+        all_preds.append(pred.cpu()) 
+        all_targs.append(target.cpu())
             
-            pbar.set_postfix(loss=loss.item())
+            # pbar.set_postfix(loss=loss.item())
 
     all_preds   = torch.cat(all_preds).numpy() 
     all_targs   = torch.cat(all_targs).numpy()
