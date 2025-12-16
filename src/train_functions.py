@@ -13,8 +13,9 @@ def train_epoch(model, loader, optimizer, criterion, device):
     total_loss, num_batches = 0, 0
 
     pbar = tqdm(loader, desc='Training')
-    for img, tar in pbar:
-        img = img.to(device); tar = tar.to(device)
+    for img, tar in pbar: 
+        img = img.to(device, non_blocking=True)
+        tar = tar.to(device, non_blocking=True)
 
         optimizer.zero_grad()
 
@@ -39,8 +40,9 @@ def validate_epoch(model, loader, criterion, device):
 
     pbar = tqdm(loader, desc='Validation')
     with torch.no_grad():
-        for img, tar in pbar:
-            img = img.to(device); tar = tar.to(device)
+        for img, tar in pbar: 
+            img = img.to(device, non_blocking=True)
+            tar = tar.to(device, non_blocking=True)
 
             pred = model(img)
             loss = criterion(pred, tar); 
